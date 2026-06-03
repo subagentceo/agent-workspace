@@ -1,52 +1,47 @@
-# Hydration — Restoring Context After Compaction
+# Hydration Guide
 
-If you are a fresh instance with no memory of this project, run these steps to fully
-restore context. Everything needed is persisted; nothing depends on chat history.
+Restore full context after a compaction event or new session.
 
-## Step 1 — Read the memory store (authoritative state)
+## Memory store location
 
-KV namespace `6db7fc3e28e04dc8bf85848faa369576` ("ke-memory-store") on Cloudflare account
-`e6294e3ea89f8207af387d459824aaae`.
+- **CF Account:** `e6294e3ea89f8207af387d459824aaae` (Alex@jadecli.com)
+- **KV Namespace:** `6db7fc3e28e04dc8bf85848faa369576` (named `ke-memory-store`)
+- **Store ID:** `ms_ke_ios_builder_loop`
 
-```js
-const KV = "6db7fc3e28e04dc8bf85848faa369576";
-const keys = await cloudflare.request({ method:"GET",
-  path:`/accounts/${accountId}/storage/kv/namespaces/${KV}/keys`, query:{ prefix:"memory:" }});
-for (const k of keys.result) {
-  const v = await cloudflare.request({ method:"GET",
-    path:`/accounts/${accountId}/storage/kv/namespaces/${KV}/values/${k.name}` });
-  // JSON.parse(v.result).content holds the memory text
-}
+## Step 1 — Read the 8 KV memory entries
+
+Via Cloudflare API:execute (account e6294e3ea89f8207af387d459824aaae):
 ```
+GET /accounts/{acct}/storage/kv/namespaces/6db7fc3e28e04dc8bf85848faa369576/keys?prefix=memory:
+```
+Then GET each `memory:<path>` value. Read in this order:
 
-Store index: key `memory_store:ms_ke_ios_builder_loop`. Read paths in order:
-project/mission, env/container-constraints, cloudflare/account, cloudflare/deployed-workers,
-github/repos, tools/mobai, loop/architecture, hydration/instructions.
+1. `memory:project/mission` — what we're building
+2. `memory:env/container-constraints` — **Swift dead-end proof (do not retry)**
+3. `memory:cloudflare/account` — account, zone, cookie format
+4. `memory:cloudflare/deployed-workers` — live workers + relay mechanism
+5. `memory:github/repos` — repo inventory
+6. `memory:tools/mobai` — ios-builder + mobai-mcp probes
+7. `memory:loop/architecture` — loop design + exact next step
+8. `memory:hydration/instructions` — this procedure
 
 ## Step 2 — Read this repo
 
-- `README.md` — the map
-- `docs/OUTCOMES.md` — what we are trying to achieve
-- `docs/breadcrumbs/INDEX.md` — every object ID
-- `ops/loop/STATE.md` — the current phase
+- `docs/OUTCOMES.md` — full goal spec
+- `ops/loop/STATE.md` — current loop phase
+- `docs/breadcrumbs/INDEX.md` — all object IDs
 
-## Step 3 — Re-probe tools if the container was reset
+## Step 3 — Verify relay is live
 
 ```bash
-cd /tmp
-git clone --depth 1 https://github.com/MobAI-App/ios-builder && rm -rf ios-builder/.git
-git clone --depth 1 https://github.com/MobAI-App/mobai-mcp && rm -rf mobai-mcp/.git
-apk add --no-cache go
-cd /tmp/ios-builder && GOTOOLCHAIN=auto GOFLAGS=-mod=mod go build -o builder ./cmd/builder
-cd /tmp/mobai-mcp && npm install && npm run build
+curl -s https://tools.agentknowledgeworkers.com/relay
+# expected: ok
 ```
 
-## Step 4 — Do not re-attempt proven dead ends
+## Do NOT retry these dead ends
 
-- Local Swift compile (musl + 2 GB disk). Use GitHub Actions.
-- In-Worker `eval()` (CF blocks it). Use Containers or browser.
-- `workers.dev` URLs (disabled). Use zone routes on `agentknowledgeworkers.com`.
-
-## Step 5 — Resume the loop
-
-Pick up from the phase in `ops/loop/STATE.md`. The next action is always written there.
+| Dead end | Evidence | Rule |
+|---|---|---|
+| Local Swift compile | `swiftly init` → "Unsupported Linux platform"; 2 GB disk | Never. GitHub Actions only. |
+| In-Worker `eval()` | CF CSP blocks permanently; `unsafe_eval` flag does not exist | Never. Browser-side or DO. |
+| workers.dev URLs | Disabled account-wide | Always use zone routes. |
