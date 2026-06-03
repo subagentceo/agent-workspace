@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "canva":          { "type": "http", "url": "https://mcp.canva.com/mcp" },
+    "mermaid-chart":  { "type": "http", "url": "https://chatgpt.mermaid.ai/anthropic/mcp" },
+    "tldraw":         { "type": "http", "url": "https://tldraw-mcp-app.tldraw.workers.dev/mcp" },
+    "figma":          { "type": "http", "url": "https://mcp.figma.com/mcp" },
+    "miro":           { "type": "http", "url": "https://mcp.miro.com/" },
+    "whimsical":      { "type": "http", "url": "https://mcp.whimsical.com/mcp" },
+    "descript":       { "type": "http", "url": "https://api.descript.com/v2/mcp/claude" },
+    "splice":         { "type": "http", "url": "https://mcp.splice.com/mcp" },
+    "sketchup":       { "type": "http", "url": "https://api.sketchup.com/mcp/v1/sketchup/mcp" },
+    "adobe":          { "type": "http", "url": "https://adobe-creativity.adobe.io/mcp" }
+  }
+}
