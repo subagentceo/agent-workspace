@@ -1,0 +1,8 @@
+{
+  "name": "design-coworkers",
+  "version": "1.0.0",
+  "description": "Code Mode bridge for 10 design MCP connectors — Canva, Figma, Miro, tldraw, Mermaid Chart, Whimsical, Descript, Splice, SketchUp, and Adobe. Create presentations, diagrams, wireframes, 3D models, canvases, and design critiques. Chains multiple design tools in one execute() call using Code Mode.",
+  "author": {
+    "name": "subagentceo"
+  }
+}
