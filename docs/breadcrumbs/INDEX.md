@@ -1,70 +1,64 @@
-# Breadcrumbs — Every Object ID
+# Breadcrumb Index — Every Object ID
 
-Exact identifiers for every Cloudflare, container, and GitHub object in this project.
-This is the lookup table. Treat as sensitive.
+## Cloudflare Account
 
-## Cloudflare account
-
-| Thing | Value |
+| Key | Value |
 |---|---|
-| Account (alex) | `e6294e3ea89f8207af387d459824aaae` |
-| Account (admin) | `f0d57a2b99e45522265df86a1fa77db5` |
-| Zone agentknowledgeworkers.com | `ea55e090c620a2da4ec1dfa89872c7f8` |
-| Auth email allowlist | admin@jadecli.com, alex@jadecli.com, zhouk.alex@gmail.com |
-| Session cookie | `s=base64({email,ts})`, 24h expiry |
-| workers.dev | DISABLED account-wide — use zone routes only |
+| Account ID | `e6294e3ea89f8207af387d459824aaae` |
+| Account name | Alex@jadecli.com's Account |
+| Auth emails | `admin@jadecli.com`, `alex@jadecli.com`, `zhouk.alex@gmail.com` |
+| workers.dev | **DISABLED** account-wide |
+| Session cookie | `s=base64({email,ts})` — 24h expiry |
+| Zone | `agentknowledgeworkers.com` |
+| Zone ID | `ea55e090c620a2da4ec1dfa89872c7f8` |
 
-## Cloudflare Workers (live)
+## Live Workers
 
-| Worker | Hostname / route | KV | Notes |
+| Worker | URL | KV | Status |
 |---|---|---|---|
-| coworkers-agent | agentknowledgeworkers.com | `fb6b8ec36e00493dbd199c626d2c70f5` | AI binding; plugins: default,legal,finance,engineering,data,sales |
-| sandbox-agent | sandbox.agentknowledgeworkers.com | `cd31beacf6704b09b8962ba4cc963745` | route `c8f808000f3b40098b0cd58a68fc883f`; in-Worker eval blocked |
-| gh-commit-relay | tools.agentknowledgeworkers.com/relay | `847586f6b96f4edd820f31814e9bcac8` | pushes to GitHub; holds token |
-| repo-creator | tools.agentknowledgeworkers.com/repo-creator | (shares relay KV) | creates org repos |
-| repo-verify | tools.agentknowledgeworkers.com/verify | (shares relay KV) | lists repo files (authed) |
-| www (Pages) | www.agentknowledgeworkers.com | — | serves app HTML |
+| coworkers-agent | `agentknowledgeworkers.com` | `fb6b8ec36e00493dbd199c626d2c70f5` | ✅ LIVE |
+| sandbox-agent | `sandbox.agentknowledgeworkers.com` | `cd31beacf6704b09b8962ba4cc963745` | ✅ LIVE (eval blocked) |
+| gh-commit-relay | `tools.../relay` | `847586f6b96f4edd820f31814e9bcac8` | ✅ LIVE |
+| repo-creator | `tools.../repo-creator` | same | ✅ LIVE |
+| repo-verify | `tools.../verify` | same | ✅ LIVE |
 
-## Cloudflare secrets / KV
+## KV Namespaces
 
-| Thing | Value |
+| Name | ID |
 |---|---|
-| Secrets store | `565244614fc34be7aa8488ce46112f60` |
-| Secret name (GitHub token) | `GITHUB_TOKEN` |
-| Relay job queue KV | `847586f6b96f4edd820f31814e9bcac8` |
-| Memory store KV | `6db7fc3e28e04dc8bf85848faa369576` |
-| Memory store index key | `memory_store:ms_ke_ios_builder_loop` |
+| coworkers-agent data | `fb6b8ec36e00493dbd199c626d2c70f5` |
+| sandbox-agent data | `cd31beacf6704b09b8962ba4cc963745` |
+| relay / tools | `847586f6b96f4edd820f31814e9bcac8` |
+| **ke-memory-store** | `6db7fc3e28e04dc8bf85848faa369576` |
+
+## Relay Details
+
+| Key | Value |
+|---|---|
+| Job key | `commit-jobs` |
+| Result key | `commit-results` |
+| Secret store | `565244614fc34be7aa8488ce46112f60` |
+| Secret name | `GITHUB_TOKEN` |
+| Job shape | `{repo, path, message, branch, contentB64}` |
 
 ## Container (Firecracker microVM)
 
-| Thing | Value |
+| Key | Value |
 |---|---|
+| DO ID | `8779a4fbeaba54e81591edd0234035d79df0826f04c561edadde75032305` |
+| App ID | `08c9c460-5792-4faa-848c-c5b7a79b8a12` |
 | OS | Alpine Linux 3.19, musl libc, x86_64 |
-| Disk | 2 GB total (~1 GB free) |
-| Node | v20.15.1 |
-| Go | `apk add go` -> 1.21; `GOTOOLCHAIN=auto` pulls 1.24 |
-| DO_ID | `8779a4fbeaba54e81591edd0234035d79df0826f04c561edadde75032305` |
-| APPLICATION_ID | `08c9c460-5792-4faa-848c-c5b7a79b8a12` |
-| Location / kernel | gig02 (SAM) / 6.12.81-cloudflare-firecracker-2026.4.25 |
-| NOTE | container filesystem resets between sessions — do not rely on /tmp persistence |
+| Location | gig02, Brazil (SAM) |
+| Kernel | `6.12.81-cloudflare-firecracker-2026.4.25` |
+| Disk | 2 GB total |
+| Swift | NOT installable (musl + disk) |
 
-## GitHub (org: subagentceo)
+## GitHub Repos (org: subagentceo)
 
-| Repo | Purpose |
-|---|---|
-| coworkers-native | App 16 — iOS 18 Swift app |
-| xcode-ai | App 19 — Xcode 26 extension |
-| sandbox-agent | App 20 — CF Worker |
-| agent-workspace | THIS repo — consolidation / control plane |
-| knowledge-engineering @ claude/dreamy-noether-VEIgr | canonical managed_agents.py (memory schema) |
-
-## Push mechanism (gh-commit-relay)
-
-Job written to KV key `commit-jobs` (JSON array):
-```json
-{ "repo": "subagentceo/coworkers-native", "path": "x/y.swift",
-  "message": "msg", "branch": "main", "contentB64": "<base64>" }
-```
-or `{ "source": "kv", "kvKey": "<key>", "repo": "...", "path": "..." }`.
-Trigger: `GET https://tools.agentknowledgeworkers.com/relay`. Results in KV key `commit-results`.
-b64 helper (non-Latin1 safe): `TextEncoder -> String.fromCharCode -> btoa`.
+| Repo | Files | Notes |
+|---|---|---|
+| coworkers-native | 11 | iOS Swift source. Needs: ios-build.yml |
+| xcode-ai | 3 | Xcode extension source |
+| sandbox-agent | 4 | Deployed CF Worker |
+| agent-workspace | this | Control plane (this repo) |
+| knowledge-engineering | — | branch `claude/dreamy-noether-VEIgr` — managed_agents.py reference |
