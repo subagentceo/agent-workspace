@@ -2,71 +2,48 @@
 
 **Consolidated control plane for the iOS-builder Ralph loop.**
 
-This repo is the single source of truth that ties together every moving part of the
-managedcoworkers / knowledge-engineering build effort: the three product repos, the
-two cloned build tools, the Cloudflare objects, the container environment, and the
-hydration memory store. If context is lost (compaction, new session, new operator),
-start here.
-
----
-
-## What this is
-
-We are building and testing **CoworkersNative** (an iOS 18 Swift app) without a Mac.
-Local Swift compilation is impossible in our Linux container (proven: musl libc + 2 GB
-disk). The only viable build surface is **GitHub Actions macOS runners**, driven by the
-**ios-builder** Go CLI. This repo orchestrates that loop.
+This repo ties together every moving part of the managedcoworkers / knowledge-engineering
+build effort. If context is lost (compaction, new session, new operator) — start here.
 
 ```
-  edit Swift  --->  push (gh-commit-relay)  --->  GitHub Actions macos-latest  --->  IPA / errors
-      ^                                                                              |
-      +-------------------------------  fix, repeat  <-------------------------------+
+ edit Swift  ──▶  gh-commit-relay (push)  ──▶  GitHub Actions macos-latest  ──▶  IPA / errors
+     ▲                                                                               │
+     └───────────────────────────  fix, repeat  ◀──────────────────────────────────┘
 ```
 
----
+## Quick start after compaction
+
+1. `docs/HYDRATION.md` — restore full context from KV memory store
+2. `docs/OUTCOMES.md` — the complete Ralph-loop goal spec
+3. `docs/breadcrumbs/INDEX.md` — every object ID (CF account, KV, workers, routes)
+4. `ops/loop/STATE.md` — current loop phase and next action
 
 ## Repository map
 
 | Path | Purpose |
 |---|---|
-| `docs/` | Architecture, the full Ralph-loop outcomes spec, execution boundary |
-| `docs/breadcrumbs/` | Exact IDs for every Cloudflare + container + GitHub object |
-| `memory/` | Mirror of the hydration memory store (KV `6db7fc3e...`) |
-| `ops/loop/` | The Ralph loop runner spec + state machine |
-| `ops/relay/` | How to push to GitHub with no local token (gh-commit-relay) |
-| `apps/` | Pointers to the three product repos |
-| `tools/` | Pointers + probe results for mobai-mcp and ios-builder |
-| `.github/workflows/` | The iOS build workflow (ios-build.yml) |
+| `docs/OUTCOMES.md` | Full spec of everything to achieve with the Ralph loop |
+| `docs/HYDRATION.md` | How to restore context from KV after compaction |
+| `docs/breadcrumbs/INDEX.md` | Every CF + container + GitHub object ID |
+| `ops/loop/STATE.md` | Loop state machine + current phase |
+| `ops/relay/RELAY.md` | gh-commit-relay usage (push to GitHub without local token) |
+| `memory/` | Mirror of the 8 KV hydration memories |
+| `apps/` | References to the 3 product repos |
+| `tools/ios-builder/` | ios-builder source (cloned, .git stripped) |
+| `tools/mobai-mcp/` | mobai-mcp source (cloned, .git stripped) |
+| `.github/workflows/ios-build.yml` | The embedded iOS build workflow |
 
----
+## Product repos
 
-## The three product repos
-
-| Repo | App | Stack | Status |
+| Repo | App# | Stack | Live? |
 |---|---|---|---|
-| [subagentceo/coworkers-native](https://github.com/subagentceo/coworkers-native) | 16 | iOS 18 Swift 6 | source pushed; needs macOS build |
+| [subagentceo/coworkers-native](https://github.com/subagentceo/coworkers-native) | 16 | iOS 18 Swift 6 | source pushed |
 | [subagentceo/xcode-ai](https://github.com/subagentceo/xcode-ai) | 19 | Xcode 26 extension | source pushed |
 | [subagentceo/sandbox-agent](https://github.com/subagentceo/sandbox-agent) | 20 | CF Worker | deployed live |
 
-## The two build tools (cloned, stripped of .git/upstream)
+## Hard constraints (do not re-litigate)
 
-| Tool | Origin | Runs in container? | Role |
-|---|---|---|---|
-| `ios-builder` | MobAI-App/ios-builder | Yes (Go 1.24) | Triggers macOS GitHub Actions builds, downloads IPA |
-| `mobai-mcp` | MobAI-App/mobai-mcp | Yes (Node 20) | MCP server for on-device control (needs MobAI desktop later) |
-
----
-
-## Quick start (resuming work)
-
-1. Read `docs/HYDRATION.md` — restores full context.
-2. Read `docs/OUTCOMES.md` — the complete Ralph-loop goal spec.
-3. Read `docs/breadcrumbs/INDEX.md` — every object ID you need.
-4. Continue from the current loop phase in `ops/loop/STATE.md`.
-
-## Hard-won facts (do not re-litigate)
-
-- **No local Swift build.** musl != glibc, 2 GB disk. Use GitHub Actions.
-- **No in-Worker `eval()`.** CF blocks it permanently; `unsafe_eval` is not a real flag.
-- **workers.dev is disabled** on the account; use zone routes only.
-- **GitHub pushes** go through the `gh-commit-relay` Worker (it holds the token).
+- **No local Swift.** musl libc + 2 GB disk. Proven dead end. Use GitHub Actions only.
+- **No in-Worker `eval()`.** CF blocks permanently. `unsafe_eval` is not a real flag.
+- **workers.dev disabled** account-wide. All workers need zone routes.
+- **GitHub pushes** go through `gh-commit-relay` Worker (holds the GITHUB_TOKEN).
